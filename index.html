@@ -1,0 +1,172 @@
+<!doctype html>
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#14263d">
+<link rel="manifest" href="manifest.webmanifest">
+<title>A&N Transportes | Relatório de Frota</title>
+<style>
+:root{--navy:#14263d;--blue:#1d4e89;--orange:#e87925;--bg:#f3f6fa;--ink:#172334;--muted:#66758a;--line:#dbe3ed;--white:#fff;--good:#176b43;--warn:#8a4b00}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.45 system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
+header{background:linear-gradient(135deg,var(--navy),#234e78);color:#fff;padding:24px 16px 28px}
+.head{max-width:850px;margin:auto}.brand{font-size:12px;letter-spacing:.16em;font-weight:800;color:#c8d9ec}.head h1{margin:8px 0 4px;font-size:clamp(24px,5vw,34px)}.head p{margin:0;color:#d8e5f3}
+main{max-width:850px;margin:-12px auto 40px;padding:0 12px}.panel{background:var(--white);border:1px solid var(--line);border-radius:18px;padding:clamp(16px,4vw,26px);box-shadow:0 8px 28px #162c4410;margin-bottom:14px}
+h2{font-size:18px;margin:0 0 16px;display:flex;align-items:center;gap:9px}.step{display:inline-grid;place-items:center;background:#e8eff7;color:var(--blue);width:28px;height:28px;border-radius:9px;font-size:14px}
+.grid{display:grid;grid-template-columns:1fr;gap:14px}@media(min-width:620px){.grid.two{grid-template-columns:1fr 1fr}}
+label{display:block;font-weight:700;font-size:14px;margin:0 0 6px}
+input,select,textarea{width:100%;font:inherit;color:var(--ink);background:#fff;border:1px solid #c8d4e1;border-radius:10px;padding:12px;min-height:46px}
+textarea{min-height:105px;resize:vertical}input:focus,select:focus,textarea:focus{outline:3px solid #1d4e8925;border-color:var(--blue)}
+.hint{font-size:12px;color:var(--muted);margin-top:5px}.categories{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}
+.cat{border:1px solid var(--line);border-radius:12px;padding:12px 6px;text-align:center;background:white;cursor:pointer;font-weight:700;font-size:13px}.cat input{width:auto;min-height:auto;margin:0 0 7px;display:block;margin-inline:auto;accent-color:var(--blue)}.cat:has(input:checked){border-color:var(--blue);background:#edf4fc;color:var(--blue)}
+.photo{border:1px dashed #9aabc0;background:#f8fafc;border-radius:12px;padding:14px}.photo input{border:0;padding:6px 0;min-height:auto}.preview{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}.preview img{width:76px;height:76px;object-fit:cover;border-radius:8px;border:1px solid var(--line)}
+button{font:inherit;font-weight:750;border:0;border-radius:11px;padding:13px 16px;cursor:pointer;min-height:48px}.primary{background:var(--orange);color:white;width:100%}.secondary{background:#e8eff7;color:var(--navy)}.danger{background:#fff0ef;color:#9b2c25}.actions{display:grid;grid-template-columns:1fr;gap:10px}@media(min-width:520px){.actions{grid-template-columns:1fr 1fr}}
+.status{padding:12px 14px;border-radius:10px;background:#edf4fc;color:var(--navy);font-size:14px;margin-bottom:14px}.status.good{background:#e8f6ee;color:var(--good)}.status.warn{background:#fff4e5;color:var(--warn)}
+.saved-item{border:1px solid var(--line);border-radius:12px;padding:12px;margin-top:9px}.saved-item strong{display:block}.small{font-size:13px;color:var(--muted)}footer{text-align:center;padding:10px 16px 28px;color:var(--muted);font-size:12px}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+<header><div class="head"><div class="brand">A&N TRANSPORTES</div><h1>Relatório de frota e viagens</h1><p>Registre ocorrências, comprovantes e informações do veículo.</p></div></header>
+<main>
+<div id="connection" class="status">Verificando conexão…</div>
+<form id="reportForm">
+<section class="panel">
+<h2><span class="step">1</span> Identificação</h2>
+<div class="grid two">
+<div><label for="driver">Motorista responsável *</label><select id="driver" required><option value="">Selecione o motorista</option><option>Adalto Correia</option><option>Pedro Hiago</option></select></div>
+<div><label for="vehicle">Veículo *</label><select id="vehicle" required><option value="">Selecione o veículo</option><option value="Mercedes-Benz 1634 — JQJ2049">Mercedes-Benz 1634 — JQJ2049</option><option value="Iveco Stralis — JRL7A98">Iveco Stralis — JRL7A98</option></select></div>
+<div><label for="odometer">Odômetro atual (km) *</label><input id="odometer" type="number" min="0" step="1" inputmode="numeric" placeholder="Ex.: 245680" required></div>
+<div><label for="reportDate">Data e hora do registro *</label><input id="reportDate" type="datetime-local" required></div>
+</div>
+</section>
+<section class="panel">
+<h2><span class="step">2</span> Tipo de registro</h2>
+<div class="categories">
+<label class="cat"><input type="radio" name="category" value="Manutenção" required>🔧<br>Manutenção</label>
+<label class="cat"><input type="radio" name="category" value="Combustível" required>⛽<br>Combustível</label>
+<label class="cat"><input type="radio" name="category" value="Notas de viagens" required>🧾<br>Notas de viagens</label>
+</div>
+<p class="hint">Escolha uma categoria por registro. Para registrar outra ocorrência, salve este registro e inicie outro usando a mesma viagem.</p>
+</section>
+<section class="panel">
+<h2><span class="step">3</span> Foto e descrição</h2>
+<div class="photo"><label for="photos">Adicionar foto(s) ou comprovante(s)</label><input id="photos" type="file" accept="image/*" capture="environment" multiple><div class="hint">As fotos ficam no dispositivo enquanto o registro estiver pendente. Use imagens reduzidas para economizar espaço e dados móveis.</div><div id="preview" class="preview"></div></div>
+<div style="margin-top:14px"><label for="description">Descrição / observações *</label><textarea id="description" required placeholder="Descreva a manutenção, abastecimento, nota de viagem ou ocorrência. Inclua valores, local, fornecedor ou número da nota quando necessário."></textarea></div>
+</section>
+<div class="panel">
+<button class="primary" type="submit">Salvar relatório neste dispositivo</button>
+<p class="hint">Os registros ficam salvos neste aparelho. Depois de configurar o serviço da empresa, os registros pendentes serão enviados individualmente quando houver internet.</p>
+</div>
+</form>
+<section class="panel">
+<h2>Registros neste dispositivo <span id="pendingCount" class="small"></span></h2>
+<div id="savedList"><p class="small">Nenhum registro salvo ainda.</p></div>
+<div class="actions" style="margin-top:14px">
+<button type="button" class="secondary" id="exportBtn">Exportar backup JSON</button>
+<button type="button" class="secondary" id="syncBtn">Enviar pendentes agora</button>
+</div>
+<p class="hint">Mantenha o backup como cópia de segurança. O envio automático só fica ativo depois de configurar o endereço do serviço no código e publicar o Apps Script conforme o LEIA-ME.</p>
+</section>
+</main>
+<footer>A&N Transportes · Formulário responsivo · Armazenamento local neste aparelho</footer>
+<script>
+const STORE_KEY='an_transportes_reports_v1';
+const $=id=>document.getElementById(id);
+let reports=[];
+function load(){try{reports=JSON.parse(localStorage.getItem(STORE_KEY)||'[]')}catch(e){reports=[]} renderSaved();}
+function persist(){try{localStorage.setItem(STORE_KEY,JSON.stringify(reports));return true}catch(e){alert('O armazenamento do aparelho está cheio. Exporte o backup e remova registros antigos para liberar espaço.');return false}}
+function nowLocal(){const d=new Date();d.setMinutes(d.getMinutes()-d.getTimezoneOffset());return d.toISOString().slice(0,16)}
+$('reportDate').value=nowLocal();
+function updateConnection(){const online=navigator.onLine;$('connection').className='status '+(online?'good':'warn');$('connection').textContent=online?'Conectado à internet. Os registros continuam salvos neste aparelho.':'Sem internet: você pode continuar preenchendo; os registros ficam salvos localmente.'}
+window.addEventListener('online',updateConnection);window.addEventListener('offline',updateConnection);updateConnection();
+$('photos').addEventListener('change',()=>{const p=$('preview');p.innerHTML='';[...$('photos').files].forEach(f=>{const img=document.createElement('img');img.alt=f.name;img.src=URL.createObjectURL(f);p.appendChild(img)})});
+function fileToDataURL(file){return new Promise((resolve,reject)=>{
+  if(!file.type.startsWith('image/')){reject(new Error('Arquivo não é imagem'));return;}
+  const reader=new FileReader(); reader.onerror=reject;
+  reader.onload=()=>{
+    const img=new Image(); img.onerror=()=>resolve({name:file.name,type:file.type,data:reader.result});
+    img.onload=()=>{
+      const max=1600, scale=Math.min(1,max/Math.max(img.width,img.height));
+      const canvas=document.createElement('canvas'); canvas.width=Math.max(1,Math.round(img.width*scale)); canvas.height=Math.max(1,Math.round(img.height*scale));
+      const ctx=canvas.getContext('2d'); ctx.drawImage(img,0,0,canvas.width,canvas.height);
+      const data=canvas.toDataURL('image/jpeg',0.78);
+      resolve({name:(file.name.replace(/\.[^.]+$/,'')||'foto')+'.jpg',type:'image/jpeg',data});
+    }; img.src=reader.result;
+  }; reader.readAsDataURL(file);
+})}
+$('reportForm').addEventListener('submit',async e=>{e.preventDefault();const btn=e.submitter;btn.disabled=true;btn.textContent='Salvando…';try{
+const category=document.querySelector('input[name="category"]:checked')?.value;
+const photos=await Promise.all([...$('photos').files].map(fileToDataURL));
+const record={id:crypto.randomUUID?crypto.randomUUID():String(Date.now()),driver:$('driver').value,vehicle:$('vehicle').value,odometer:Number($('odometer').value),date:$('reportDate').value,category,description:$('description').value.trim(),photos,createdAt:new Date().toISOString(),status:'Pendente de envio'};
+reports.unshift(record);if(persist()){renderSaved();$('reportForm').reset();$('reportDate').value=nowLocal();$('preview').innerHTML='';alert('Relatório salvo neste dispositivo. O envio será tentado quando a conexão estiver disponível.');if(navigator.onLine) setTimeout(syncPending,500);}
+}catch(err){alert('Não foi possível salvar as fotos. Tente imagens menores ou menos fotos.')}finally{btn.disabled=false;btn.textContent='Salvar relatório neste dispositivo'}});
+function renderSaved(){const list=$('savedList');$('pendingCount').textContent=`(${reports.length})`;if(!reports.length){list.innerHTML='<p class="small">Nenhum registro salvo ainda.</p>';return}list.innerHTML='';reports.forEach(r=>{const el=document.createElement('div');el.className='saved-item';const title=document.createElement('strong');title.textContent=`${r.category} · ${r.vehicle}`;const info=document.createElement('div');info.className='small';info.textContent=`${r.driver} · Odômetro ${r.odometer} km · ${r.date.replace('T',' ')} · ${r.photos.length} foto(s)`;const desc=document.createElement('p');desc.textContent=r.description;desc.style.margin='8px 0';const status=document.createElement('div');status.className='small';status.textContent=r.status;el.append(title,info,desc,status);list.appendChild(el)})}
+$('exportBtn').addEventListener('click',()=>{const blob=new Blob([JSON.stringify({exportedAt:new Date().toISOString(),company:'A&N TRANSPORTES',reports},null,2)],{type:'application/json'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=`an-transportes-backup-${new Date().toISOString().slice(0,10)}.json`;a.click();URL.revokeObjectURL(url)});
+// Cole aqui a URL do Web App publicado no Google Apps Script.
+const SYNC_URL = 'https://script.google.com/macros/s/AKfycbwavELGs1JjtQSOKgWVkRTcbo3NtNQl0vEwgyWwg9OWxfcXCPNK4nNO9fSD3np_ISqnrA/exec';
+let syncInProgress = false;
+function syncPending(){
+  if(syncInProgress) return;
+  if(!navigator.onLine){alert('Sem internet. Os registros continuam salvos neste aparelho e serão tentados novamente quando a conexão voltar.');return;}
+  if(!SYNC_URL.startsWith('https://script.google.com/macros/s/')){alert('A integração ainda não foi configurada. Siga o arquivo LEIA-ME e cole a URL do Web App no campo SYNC_URL do index.html.');return;}
+  const pending = reports.filter(r => r.status !== 'Enviado');
+  if(!pending.length){alert('Não há registros pendentes de envio.');return;}
+  syncInProgress = true;
+  const btn = $('syncBtn'); btn.disabled = true; btn.textContent = 'Enviando…';
+  let index = 0;
+  const sendNext = () => {
+    if(index >= pending.length){syncInProgress=false;btn.disabled=false;btn.textContent='Enviar pendentes agora';renderSaved();return;}
+    const record = pending[index];
+    submitToAppsScript(record).then(ok => {
+      if(ok){
+        const original = reports.find(r => r.id === record.id);
+        if(original){original.status='Enviado'; original.sentAt=new Date().toISOString(); persist(); renderSaved();}
+      }
+      index++;
+      sendNext();
+    }).catch(() => { 
+      const original = reports.find(r => r.id === record.id);
+      if(original) original.status='Pendente de envio — falha; tentará novamente';
+      persist(); renderSaved();
+      syncInProgress=false;btn.disabled=false;btn.textContent='Enviar pendentes agora';
+      alert('Não foi possível confirmar o envio. O registro permanece salvo e será tentado novamente. Verifique a internet e a configuração do serviço.');
+    });
+  };
+  sendNext();
+}
+function submitToAppsScript(record){
+  return new Promise((resolve,reject)=>{
+    const requestId = (crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + Math.random().toString(16).slice(2));
+    const iframe = document.createElement('iframe');
+    iframe.name = 'an-sync-' + requestId; iframe.style.display='none';
+    const form = document.createElement('form');
+    form.method='POST'; form.action=SYNC_URL; form.target=iframe.name; form.style.display='none';
+    const field = document.createElement('input'); field.type='hidden'; field.name='payload';
+    field.value=JSON.stringify({requestId,record});
+    form.appendChild(field); document.body.append(iframe,form);
+    let finished=false;
+    const cleanup = () => {window.removeEventListener('message',onMessage);form.remove();iframe.remove();};
+    const timer=setTimeout(()=>{if(!finished){finished=true;cleanup();reject(new Error('Timeout'));}},90000);
+    const onMessage = (event) => {
+      const d=event.data;
+      if(!d || d.type!=='AN_TRANSPORTES_SYNC' || d.requestId!==requestId) return;
+      if(finished)return; finished=true;clearTimeout(timer);cleanup();
+      if(d.ok) resolve(true); else reject(new Error(d.error || 'Falha no servidor'));
+    };
+    window.addEventListener('message',onMessage);
+    document.body.appendChild(iframe);
+    document.body.appendChild(form);
+    form.submit();
+  });
+}
+$('syncBtn').addEventListener('click',syncPending);
+window.addEventListener('online',()=>{updateConnection();setTimeout(syncPending,1500);});
+
+load();
+if(navigator.onLine && SYNC_URL.startsWith('https://script.google.com/macros/s/')) setTimeout(syncPending,1200);
+if('serviceWorker' in navigator && location.protocol.startsWith('http')) navigator.serviceWorker.register('./sw.js').catch(()=>{});
+</script>
+</body>
+</html>
