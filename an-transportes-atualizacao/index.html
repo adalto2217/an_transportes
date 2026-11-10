@@ -1,0 +1,442 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#14263d">
+<link rel="manifest" href="manifest.webmanifest">
+<title>A&N Transportes | Relatório de Frota</title>
+<style>
+:root{--navy:#14263d;--blue:#1d4e89;--orange:#e87925;--bg:#f3f6fa;--ink:#172334;--muted:#66758a;--line:#dbe3ed;--white:#fff;--good:#176b43;--warn:#8a4b00}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.45 system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
+header{background:linear-gradient(135deg,var(--navy),#234e78);color:#fff;padding:24px 16px 28px}
+.head{max-width:850px;margin:auto}.brand{font-size:12px;letter-spacing:.16em;font-weight:800;color:#c8d9ec}.head h1{margin:8px 0 4px;font-size:clamp(24px,5vw,34px)}.head p{margin:0;color:#d8e5f3}
+main{max-width:850px;margin:-12px auto 40px;padding:0 12px}.panel{background:var(--white);border:1px solid var(--line);border-radius:18px;padding:clamp(16px,4vw,26px);box-shadow:0 8px 28px #162c4410;margin-bottom:14px}
+h2{font-size:18px;margin:0 0 16px;display:flex;align-items:center;gap:9px}.step{display:inline-grid;place-items:center;background:#e8eff7;color:var(--blue);width:28px;height:28px;border-radius:9px;font-size:14px}
+.grid{display:grid;grid-template-columns:1fr;gap:14px}@media(min-width:620px){.grid.two{grid-template-columns:1fr 1fr}}
+label{display:block;font-weight:700;font-size:14px;margin:0 0 6px}
+input,select,textarea{width:100%;font:inherit;color:var(--ink);background:#fff;border:1px solid #c8d4e1;border-radius:10px;padding:12px;min-height:46px}
+textarea{min-height:105px;resize:vertical}input:focus,select:focus,textarea:focus{outline:3px solid #1d4e8925;border-color:var(--blue)}
+.hint{font-size:12px;color:var(--muted);margin-top:5px}.categories{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}
+.cat{border:1px solid var(--line);border-radius:12px;padding:12px 6px;text-align:center;background:white;cursor:pointer;font-weight:700;font-size:13px}.cat input{width:auto;min-height:auto;margin:0 0 7px;display:block;margin-inline:auto;accent-color:var(--blue)}.cat:has(input:checked){border-color:var(--blue);background:#edf4fc;color:var(--blue)}
+.photo{border:1px dashed #9aabc0;background:#f8fafc;border-radius:12px;padding:14px}.photo input{border:0;padding:6px 0;min-height:auto}.preview{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}.preview img{width:76px;height:76px;object-fit:cover;border-radius:8px;border:1px solid var(--line)}
+button{font:inherit;font-weight:750;border:0;border-radius:11px;padding:13px 16px;cursor:pointer;min-height:48px}.primary{background:var(--orange);color:white;width:100%}.secondary{background:#e8eff7;color:var(--navy)}.danger{background:#fff0ef;color:#9b2c25}.actions{display:grid;grid-template-columns:1fr;gap:10px}@media(min-width:520px){.actions{grid-template-columns:1fr 1fr}}
+.status{padding:12px 14px;border-radius:10px;background:#edf4fc;color:var(--navy);font-size:14px;margin-bottom:14px}.status.good{background:#e8f6ee;color:var(--good)}.status.warn{background:#fff4e5;color:var(--warn)}
+.saved-item{border:1px solid var(--line);border-radius:12px;padding:12px;margin-top:9px}.saved-item strong{display:block}.small{font-size:13px;color:var(--muted)}footer{text-align:center;padding:10px 16px 28px;color:var(--muted);font-size:12px}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+<header><div class="head"><div class="brand">A&N TRANSPORTES</div><h1>Relatório de frota e viagens</h1><p>Registre ocorrências, comprovantes e informações do veículo.</p></div></header>
+<main>
+<div id="connection" class="status">Verificando conexão…</div>
+<form id="reportForm">
+<section class="panel">
+<h2><span class="step">1</span> Identificação</h2>
+<div class="grid two">
+<div><label for="driver">Motorista responsável *</label><select id="driver" required><option value="">Selecione o motorista</option><option>Adalto Correia</option><option>Pedro Hiago</option></select></div>
+<div><label for="vehicle">Veículo *</label><select id="vehicle" required><option value="">Selecione o veículo</option><option value="Mercedes-Benz 1634 — JQJ2049">Mercedes-Benz 1634 — JQJ2049</option><option value="Iveco Stralis — JRL7A98">Iveco Stralis — JRL7A98</option></select></div>
+<div><label for="odometer">Odômetro atual (km) *</label><input id="odometer" type="number" min="0" step="1" inputmode="numeric" placeholder="Ex.: 245680" required></div>
+<div><label for="reportDate">Data e hora do registro *</label><input id="reportDate" type="datetime-local" required></div>
+</div>
+</section>
+<section class="panel">
+<h2><span class="step">2</span> Tipo de registro</h2>
+<div class="categories">
+<label class="cat"><input type="radio" name="category" value="Manutenção" required>🔧<br>Manutenção</label>
+<label class="cat"><input type="radio" name="category" value="Combustível" required>⛽<br>Combustível</label>
+<label class="cat"><input type="radio" name="category" value="Notas de viagens" required>🧾<br>Notas de viagens</label>
+</div>
+<p class="hint">Escolha uma categoria por registro. Para registrar outra ocorrência, salve este registro e inicie outro usando a mesma viagem.</p>
+</section>
+<section class="panel">
+<h2><span class="step">3</span> Foto e descrição</h2>
+<div class="photo"><label for="photos">Adicionar foto(s) ou comprovante(s)</label><input id="photos" type="file" accept="image/*" capture="environment" multiple><div class="hint">As fotos são compactadas e ficam salvas neste aparelho junto com o relatório. Você pode remover cada foto antes de salvar.</div><div id="photoCount" class="hint">0/5 foto(s) selecionada(s)</div><div id="preview" class="preview"></div></div>
+<div style="margin-top:14px"><label for="description">Descrição / observações *</label><textarea id="description" required placeholder="Descreva a manutenção, abastecimento, nota de viagem ou ocorrência. Inclua valores, local, fornecedor ou número da nota quando necessário."></textarea></div>
+</section>
+<div class="panel">
+<button class="primary" type="submit">Salvar relatório neste dispositivo</button>
+<p class="hint">Os registros ficam salvos neste aparelho. Depois de configurar o serviço da empresa, os registros pendentes serão enviados individualmente quando houver internet.</p>
+</div>
+</form>
+<section class="panel">
+<h2>Registros neste dispositivo <span id="pendingCount" class="small"></span></h2>
+<div id="savedList"><p class="small">Nenhum registro salvo ainda.</p></div>
+<div class="actions" style="margin-top:14px">
+<button type="button" class="secondary" id="exportBtn">Exportar backup JSON</button>
+<button type="button" class="secondary" id="syncBtn">Enviar pendentes agora</button>
+</div>
+<p class="hint">Mantenha o backup como cópia de segurança. O envio automático só fica ativo depois de configurar o endereço do serviço no código e publicar o Apps Script conforme o LEIA-ME.</p>
+</section>
+</main>
+<footer>A&N Transportes · Formulário responsivo · Armazenamento offline neste aparelho</footer>
+<script>
+const DB_NAME = 'an_transportes_db';
+const DB_VERSION = 1;
+const STORE_NAME = 'reports';
+const MAX_PHOTOS = 5;
+const MAX_IMAGE_SIDE = 1440;
+const IMAGE_QUALITY = 0.72;
+const $ = id => document.getElementById(id);
+const SYNC_URL = 'https://script.google.com/macros/s/AKfycbwavELGs1JjtQSOKgWVkRTcbo3NtNQl0vEwgyWwg9OWxfcXCPNK4nNO9fSD3np_ISqnrA/exec';
+let reports = [];
+let selectedPhotos = [];
+let syncInProgress = false;
+let dbPromise;
+
+function openDB() {
+  if (!('indexedDB' in window)) return Promise.reject(new Error('Este navegador não oferece suporte ao armazenamento local necessário.'));
+  if (!dbPromise) dbPromise = new Promise((resolve, reject) => {
+    const request = indexedDB.open(DB_NAME, DB_VERSION);
+    request.onupgradeneeded = () => {
+      const db = request.result;
+      if (!db.objectStoreNames.contains(STORE_NAME)) db.createObjectStore(STORE_NAME, { keyPath: 'id' });
+    };
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error || new Error('Não foi possível abrir o banco local.'));
+  });
+  return dbPromise;
+}
+
+async function dbGetAll() {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE_NAME, 'readonly');
+    const req = tx.objectStore(STORE_NAME).getAll();
+    req.onsuccess = () => resolve(req.result || []);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+async function dbPut(record) {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE_NAME, 'readwrite');
+    tx.objectStore(STORE_NAME).put(record);
+    tx.oncomplete = () => resolve(true);
+    tx.onerror = () => reject(tx.error || new Error('Falha ao gravar o relatório.'));
+    tx.onabort = () => reject(tx.error || new Error('Gravação cancelada.'));
+  });
+}
+
+function nowLocal() {
+  const d = new Date();
+  d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+  return d.toISOString().slice(0, 16);
+}
+$('reportDate').value = nowLocal();
+
+function updateConnection() {
+  const online = navigator.onLine;
+  $('connection').className = 'status ' + (online ? 'good' : 'warn');
+  $('connection').textContent = online
+    ? 'Conectado à internet. Os registros ficam salvos neste aparelho.'
+    : 'Sem internet: você pode continuar preenchendo; os registros ficam salvos neste aparelho.';
+}
+window.addEventListener('online', updateConnection);
+window.addEventListener('offline', updateConnection);
+updateConnection();
+
+function makeId() {
+  return (crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + Math.random().toString(16).slice(2));
+}
+
+async function imageFileToBlob(file) {
+  if (!file.type.startsWith('image/')) throw new Error('Selecione somente arquivos de imagem.');
+  let bitmap;
+  let source;
+  let width;
+  let height;
+  if ('createImageBitmap' in window) {
+    bitmap = await createImageBitmap(file);
+    source = bitmap;
+    width = bitmap.width;
+    height = bitmap.height;
+  } else {
+    source = await new Promise((resolve, reject) => {
+      const img = new Image();
+      const url = URL.createObjectURL(file);
+      img.onload = () => { URL.revokeObjectURL(url); resolve(img); };
+      img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('Não foi possível abrir uma das fotos.')); };
+      img.src = url;
+    });
+    width = source.naturalWidth;
+    height = source.naturalHeight;
+  }
+  const scale = Math.min(1, MAX_IMAGE_SIDE / Math.max(width, height));
+  const canvas = document.createElement('canvas');
+  canvas.width = Math.max(1, Math.round(width * scale));
+  canvas.height = Math.max(1, Math.round(height * scale));
+  const ctx = canvas.getContext('2d', { alpha: false });
+  if (!ctx) throw new Error('Não foi possível processar a foto.');
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.drawImage(source, 0, 0, canvas.width, canvas.height);
+  if (bitmap) bitmap.close();
+  const blob = await new Promise((resolve, reject) => canvas.toBlob(
+    result => result ? resolve(result) : reject(new Error('Não foi possível compactar uma das fotos.')),
+    'image/jpeg', IMAGE_QUALITY
+  ));
+  return { name: (file.name.replace(/\.[^.]+$/, '') || 'foto') + '.jpg', type: 'image/jpeg', blob };
+}
+
+function renderPhotoPreview() {
+  const preview = $('preview');
+  preview.innerHTML = '';
+  selectedPhotos.forEach((photo, index) => {
+    const item = document.createElement('div');
+    item.style.cssText = 'display:flex;flex-direction:column;gap:5px;width:92px;';
+    const img = document.createElement('img');
+    img.alt = photo.name;
+    img.src = URL.createObjectURL(photo.blob);
+    img.onload = () => URL.revokeObjectURL(img.src);
+    img.style.cssText = 'width:88px;height:88px;object-fit:cover;border-radius:8px;border:1px solid var(--line);';
+    const remove = document.createElement('button');
+    remove.type = 'button';
+    remove.className = 'danger';
+    remove.textContent = 'Remover';
+    remove.style.cssText = 'min-height:34px;padding:6px;font-size:12px;';
+    remove.setAttribute('aria-label', 'Remover foto ' + photo.name);
+    remove.addEventListener('click', () => {
+      selectedPhotos.splice(index, 1);
+      renderPhotoPreview();
+    });
+    item.append(img, remove);
+    preview.appendChild(item);
+  });
+  $('photoCount').textContent = selectedPhotos.length + '/' + MAX_PHOTOS + ' foto(s) selecionada(s)';
+}
+
+$('photos').addEventListener('change', async () => {
+  const files = [...$('photos').files];
+  $('photos').value = '';
+  const available = MAX_PHOTOS - selectedPhotos.length;
+  if (available <= 0) {
+    alert('O limite é de ' + MAX_PHOTOS + ' fotos por relatório. Remova uma foto para adicionar outra.');
+    return;
+  }
+  const accepted = files.slice(0, available);
+  if (files.length > available) alert('Foram selecionadas somente mais ' + available + ' foto(s), para respeitar o limite de ' + MAX_PHOTOS + '.');
+  const label = $('photoCount');
+  label.textContent = 'Preparando fotos…';
+  try {
+    for (const file of accepted) selectedPhotos.push(await imageFileToBlob(file));
+    renderPhotoPreview();
+  } catch (err) {
+    renderPhotoPreview();
+    alert(err.message || 'Não foi possível processar as fotos. Tente imagens menores.');
+  }
+});
+
+function blobToDataURL(blob) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = () => reject(reader.error || new Error('Falha ao preparar foto para envio.'));
+    reader.readAsDataURL(blob);
+  });
+}
+
+$('reportForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  const btn = e.submitter || $('reportForm').querySelector('button[type="submit"]');
+  btn.disabled = true;
+  btn.textContent = 'Salvando…';
+  try {
+    const category = document.querySelector('input[name="category"]:checked')?.value;
+    const record = {
+      id: makeId(),
+      driver: $('driver').value,
+      vehicle: $('vehicle').value,
+      odometer: Number($('odometer').value),
+      date: $('reportDate').value,
+      category,
+      description: $('description').value.trim(),
+      photos: selectedPhotos.map(p => ({ name: p.name, type: p.type, blob: p.blob })),
+      createdAt: new Date().toISOString(),
+      status: 'Pendente de envio'
+    };
+    await dbPut(record);
+    reports.unshift(record);
+    renderSaved();
+    $('reportForm').reset();
+    $('reportDate').value = nowLocal();
+    selectedPhotos = [];
+    renderPhotoPreview();
+    alert('Relatório salvo neste dispositivo. O envio será tentado quando houver internet.');
+    if (navigator.onLine) setTimeout(syncPending, 500);
+  } catch (err) {
+    alert('Não foi possível salvar no armazenamento deste aparelho. Verifique o espaço disponível no navegador e tente novamente. Detalhe: ' + (err.message || 'erro desconhecido'));
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Salvar relatório neste dispositivo';
+  }
+});
+
+function renderSaved() {
+  const list = $('savedList');
+  $('pendingCount').textContent = '(' + reports.length + ')';
+  if (!reports.length) {
+    list.innerHTML = '<p class="small">Nenhum registro salvo ainda.</p>';
+    return;
+  }
+  list.innerHTML = '';
+  reports.forEach(r => {
+    const el = document.createElement('div');
+    el.className = 'saved-item';
+    const title = document.createElement('strong');
+    title.textContent = (r.category || 'Registro') + ' · ' + (r.vehicle || '');
+    const info = document.createElement('div');
+    info.className = 'small';
+    info.textContent = (r.driver || '') + ' · Odômetro ' + (r.odometer || 0) + ' km · ' + String(r.date || '').replace('T', ' ') + ' · ' + ((r.photos || []).length) + ' foto(s)';
+    const desc = document.createElement('p');
+    desc.textContent = r.description || '';
+    desc.style.margin = '8px 0';
+    const status = document.createElement('div');
+    status.className = 'small';
+    status.textContent = r.status || 'Pendente de envio';
+    el.append(title, info, desc, status);
+    list.appendChild(el);
+  });
+}
+
+async function exportBackup() {
+  const exportReports = [];
+  for (const r of reports) {
+    const photos = [];
+    for (const p of (r.photos || [])) {
+      const blob = p.blob || p.data;
+      photos.push({ name: p.name, type: p.type || 'image/jpeg', data: typeof blob === 'string' ? blob : await blobToDataURL(blob) });
+    }
+    exportReports.push({ ...r, photos });
+  }
+  const payload = { exportedAt: new Date().toISOString(), company: 'A&N TRANSPORTES', reports: exportReports };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'an-transportes-backup-' + new Date().toISOString().slice(0, 10) + '.json';
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+$('exportBtn').addEventListener('click', () => exportBackup().catch(err => alert('Não foi possível gerar o backup: ' + err.message)));
+
+async function syncPending() {
+  if (syncInProgress) return;
+  if (!navigator.onLine) return;
+  if (!SYNC_URL.startsWith('https://script.google.com/macros/s/')) {
+    alert('A integração com o serviço da empresa não está configurada.');
+    return;
+  }
+  const pending = reports.filter(r => r.status !== 'Enviado');
+  if (!pending.length) return;
+  syncInProgress = true;
+  const btn = $('syncBtn');
+  btn.disabled = true;
+  btn.textContent = 'Enviando…';
+  try {
+    for (const record of pending) {
+      const wireRecord = {
+        ...record,
+        photos: await Promise.all((record.photos || []).map(async p => ({
+          name: p.name,
+          type: p.type || 'image/jpeg',
+          data: p.data || await blobToDataURL(p.blob)
+        })))
+      };
+      await submitToAppsScript(wireRecord);
+      const original = reports.find(r => r.id === record.id);
+      if (original) {
+        original.status = 'Enviado';
+        original.sentAt = new Date().toISOString();
+        await dbPut(original);
+        renderSaved();
+      }
+    }
+  } catch (err) {
+    const failed = pending.find(r => r.status !== 'Enviado');
+    if (failed) {
+      failed.status = 'Pendente de envio — falha; tentará novamente';
+      try { await dbPut(failed); } catch (_) {}
+      renderSaved();
+    }
+    alert('Não foi possível confirmar o envio. O registro continua salvo neste aparelho e será tentado novamente quando houver conexão.');
+  } finally {
+    syncInProgress = false;
+    btn.disabled = false;
+    btn.textContent = 'Enviar pendentes agora';
+  }
+}
+
+function submitToAppsScript(record) {
+  return new Promise((resolve, reject) => {
+    const requestId = makeId();
+    const iframe = document.createElement('iframe');
+    iframe.name = 'an-sync-' + requestId;
+    iframe.style.display = 'none';
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = SYNC_URL;
+    form.target = iframe.name;
+    form.style.display = 'none';
+    const field = document.createElement('input');
+    field.type = 'hidden';
+    field.name = 'payload';
+    field.value = JSON.stringify({ requestId, record });
+    form.appendChild(field);
+    let finished = false;
+    const cleanup = () => {
+      window.removeEventListener('message', onMessage);
+      form.remove();
+      iframe.remove();
+    };
+    const timer = setTimeout(() => {
+      if (!finished) {
+        finished = true;
+        cleanup();
+        reject(new Error('Tempo esgotado aguardando confirmação.'));
+      }
+    }, 90000);
+    const onMessage = event => {
+      const d = event.data;
+      if (!d || d.type !== 'AN_TRANSPORTES_SYNC' || d.requestId !== requestId) return;
+      if (finished) return;
+      finished = true;
+      clearTimeout(timer);
+      cleanup();
+      if (d.ok) resolve(true);
+      else reject(new Error(d.message || 'Falha no servidor.'));
+    };
+    window.addEventListener('message', onMessage);
+    document.body.append(iframe, form);
+    form.submit();
+  });
+}
+
+$('syncBtn').addEventListener('click', syncPending);
+window.addEventListener('online', () => { updateConnection(); setTimeout(syncPending, 1500); });
+
+async function load() {
+  try {
+    reports = await dbGetAll();
+    reports.sort((a, b) => String(b.createdAt || '').localeCompare(String(a.createdAt || '')));
+    renderSaved();
+    // Remove somente a cópia antiga de testes do localStorage; os relatórios atuais ficam no IndexedDB.
+    try { localStorage.removeItem('an_transportes_reports_v1'); } catch (_) {}
+    if (navigator.onLine) setTimeout(syncPending, 1200);
+  } catch (err) {
+    $('connection').className = 'status warn';
+    $('connection').textContent = 'Não foi possível iniciar o armazenamento local. Atualize o navegador ou use outro navegador atualizado.';
+    alert('O armazenamento local não pôde ser iniciado. Seus dados ainda não foram salvos.');
+  }
+}
+
+$('photoCount').textContent = '0/' + MAX_PHOTOS + ' foto(s) selecionada(s)';
+load();
+if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
+  navigator.serviceWorker.register('./sw.js').catch(err => console.warn('Service Worker não foi instalado:', err));
+}
+
+</script>
+</body>
+</html>

@@ -1,0 +1,11 @@
+{
+  "name": "A&N Transportes - Relatório de Frota",
+  "short_name": "A&N Transportes",
+  "lang": "pt-BR",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f3f6fa",
+  "theme_color": "#14263d",
+  "description": "Registro offline de ocorrências, fotos e informações da frota."
+}
