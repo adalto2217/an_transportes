@@ -1,5 +1,4 @@
 <!doctype html>
-<!doctype html>
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8">
@@ -52,7 +51,7 @@ button{font:inherit;font-weight:750;border:0;border-radius:11px;padding:13px 16p
 </section>
 <section class="panel">
 <h2><span class="step">3</span> Foto e descrição</h2>
-<div class="photo"><label for="photos">Adicionar foto(s) ou comprovante(s)</label><input id="photos" type="file" accept="image/*" capture="environment" multiple><div class="hint">As fotos ficam no dispositivo enquanto o registro estiver pendente. Use imagens reduzidas para economizar espaço e dados móveis.</div><div id="preview" class="preview"></div></div>
+<div class="photo"><label for="photos">Adicionar foto(s) ou comprovante(s)</label><input id="photos" type="file" accept="image/*" capture="environment" multiple><div class="hint">As fotos são compactadas e ficam salvas neste aparelho junto com o relatório. Você pode remover cada foto antes de salvar.</div><div id="photoCount" class="hint">0/5 foto(s) selecionada(s)</div><div id="preview" class="preview"></div></div>
 <div style="margin-top:14px"><label for="description">Descrição / observações *</label><textarea id="description" required placeholder="Descreva a manutenção, abastecimento, nota de viagem ou ocorrência. Inclua valores, local, fornecedor ou número da nota quando necessário."></textarea></div>
 </section>
 <div class="panel">
@@ -70,103 +69,374 @@ button{font:inherit;font-weight:750;border:0;border-radius:11px;padding:13px 16p
 <p class="hint">Mantenha o backup como cópia de segurança. O envio automático só fica ativo depois de configurar o endereço do serviço no código e publicar o Apps Script conforme o LEIA-ME.</p>
 </section>
 </main>
-<footer>A&N Transportes · Formulário responsivo · Armazenamento local neste aparelho</footer>
+<footer>A&N Transportes · Formulário responsivo · Armazenamento offline neste aparelho</footer>
 <script>
-const STORE_KEY='an_transportes_reports_v1';
-const $=id=>document.getElementById(id);
-let reports=[];
-function load(){try{reports=JSON.parse(localStorage.getItem(STORE_KEY)||'[]')}catch(e){reports=[]} renderSaved();}
-function persist(){try{localStorage.setItem(STORE_KEY,JSON.stringify(reports));return true}catch(e){alert('O armazenamento do aparelho está cheio. Exporte o backup e remova registros antigos para liberar espaço.');return false}}
-function nowLocal(){const d=new Date();d.setMinutes(d.getMinutes()-d.getTimezoneOffset());return d.toISOString().slice(0,16)}
-$('reportDate').value=nowLocal();
-function updateConnection(){const online=navigator.onLine;$('connection').className='status '+(online?'good':'warn');$('connection').textContent=online?'Conectado à internet. Os registros continuam salvos neste aparelho.':'Sem internet: você pode continuar preenchendo; os registros ficam salvos localmente.'}
-window.addEventListener('online',updateConnection);window.addEventListener('offline',updateConnection);updateConnection();
-$('photos').addEventListener('change',()=>{const p=$('preview');p.innerHTML='';[...$('photos').files].forEach(f=>{const img=document.createElement('img');img.alt=f.name;img.src=URL.createObjectURL(f);p.appendChild(img)})});
-function fileToDataURL(file){return new Promise((resolve,reject)=>{
-  if(!file.type.startsWith('image/')){reject(new Error('Arquivo não é imagem'));return;}
-  const reader=new FileReader(); reader.onerror=reject;
-  reader.onload=()=>{
-    const img=new Image(); img.onerror=()=>resolve({name:file.name,type:file.type,data:reader.result});
-    img.onload=()=>{
-      const max=1600, scale=Math.min(1,max/Math.max(img.width,img.height));
-      const canvas=document.createElement('canvas'); canvas.width=Math.max(1,Math.round(img.width*scale)); canvas.height=Math.max(1,Math.round(img.height*scale));
-      const ctx=canvas.getContext('2d'); ctx.drawImage(img,0,0,canvas.width,canvas.height);
-      const data=canvas.toDataURL('image/jpeg',0.78);
-      resolve({name:(file.name.replace(/\.[^.]+$/,'')||'foto')+'.jpg',type:'image/jpeg',data});
-    }; img.src=reader.result;
-  }; reader.readAsDataURL(file);
-})}
-$('reportForm').addEventListener('submit',async e=>{e.preventDefault();const btn=e.submitter;btn.disabled=true;btn.textContent='Salvando…';try{
-const category=document.querySelector('input[name="category"]:checked')?.value;
-const photos=await Promise.all([...$('photos').files].map(fileToDataURL));
-const record={id:crypto.randomUUID?crypto.randomUUID():String(Date.now()),driver:$('driver').value,vehicle:$('vehicle').value,odometer:Number($('odometer').value),date:$('reportDate').value,category,description:$('description').value.trim(),photos,createdAt:new Date().toISOString(),status:'Pendente de envio'};
-reports.unshift(record);if(persist()){renderSaved();$('reportForm').reset();$('reportDate').value=nowLocal();$('preview').innerHTML='';alert('Relatório salvo neste dispositivo. O envio será tentado quando a conexão estiver disponível.');if(navigator.onLine) setTimeout(syncPending,500);}
-}catch(err){alert('Não foi possível salvar as fotos. Tente imagens menores ou menos fotos.')}finally{btn.disabled=false;btn.textContent='Salvar relatório neste dispositivo'}});
-function renderSaved(){const list=$('savedList');$('pendingCount').textContent=`(${reports.length})`;if(!reports.length){list.innerHTML='<p class="small">Nenhum registro salvo ainda.</p>';return}list.innerHTML='';reports.forEach(r=>{const el=document.createElement('div');el.className='saved-item';const title=document.createElement('strong');title.textContent=`${r.category} · ${r.vehicle}`;const info=document.createElement('div');info.className='small';info.textContent=`${r.driver} · Odômetro ${r.odometer} km · ${r.date.replace('T',' ')} · ${r.photos.length} foto(s)`;const desc=document.createElement('p');desc.textContent=r.description;desc.style.margin='8px 0';const status=document.createElement('div');status.className='small';status.textContent=r.status;el.append(title,info,desc,status);list.appendChild(el)})}
-$('exportBtn').addEventListener('click',()=>{const blob=new Blob([JSON.stringify({exportedAt:new Date().toISOString(),company:'A&N TRANSPORTES',reports},null,2)],{type:'application/json'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=`an-transportes-backup-${new Date().toISOString().slice(0,10)}.json`;a.click();URL.revokeObjectURL(url)});
-// Cole aqui a URL do Web App publicado no Google Apps Script.
+const DB_NAME = 'an_transportes_db';
+const DB_VERSION = 1;
+const STORE_NAME = 'reports';
+const MAX_PHOTOS = 5;
+const MAX_IMAGE_SIDE = 1440;
+const IMAGE_QUALITY = 0.72;
+const $ = id => document.getElementById(id);
 const SYNC_URL = 'https://script.google.com/macros/s/AKfycbwavELGs1JjtQSOKgWVkRTcbo3NtNQl0vEwgyWwg9OWxfcXCPNK4nNO9fSD3np_ISqnrA/exec';
+let reports = [];
+let selectedPhotos = [];
 let syncInProgress = false;
-function syncPending(){
-  if(syncInProgress) return;
-  if(!navigator.onLine){alert('Sem internet. Os registros continuam salvos neste aparelho e serão tentados novamente quando a conexão voltar.');return;}
-  if(!SYNC_URL.startsWith('https://script.google.com/macros/s/')){alert('A integração ainda não foi configurada. Siga o arquivo LEIA-ME e cole a URL do Web App no campo SYNC_URL do index.html.');return;}
-  const pending = reports.filter(r => r.status !== 'Enviado');
-  if(!pending.length){alert('Não há registros pendentes de envio.');return;}
-  syncInProgress = true;
-  const btn = $('syncBtn'); btn.disabled = true; btn.textContent = 'Enviando…';
-  let index = 0;
-  const sendNext = () => {
-    if(index >= pending.length){syncInProgress=false;btn.disabled=false;btn.textContent='Enviar pendentes agora';renderSaved();return;}
-    const record = pending[index];
-    submitToAppsScript(record).then(ok => {
-      if(ok){
-        const original = reports.find(r => r.id === record.id);
-        if(original){original.status='Enviado'; original.sentAt=new Date().toISOString(); persist(); renderSaved();}
-      }
-      index++;
-      sendNext();
-    }).catch(() => { 
-      const original = reports.find(r => r.id === record.id);
-      if(original) original.status='Pendente de envio — falha; tentará novamente';
-      persist(); renderSaved();
-      syncInProgress=false;btn.disabled=false;btn.textContent='Enviar pendentes agora';
-      alert('Não foi possível confirmar o envio. O registro permanece salvo e será tentado novamente. Verifique a internet e a configuração do serviço.');
-    });
-  };
-  sendNext();
-}
-function submitToAppsScript(record){
-  return new Promise((resolve,reject)=>{
-    const requestId = (crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + Math.random().toString(16).slice(2));
-    const iframe = document.createElement('iframe');
-    iframe.name = 'an-sync-' + requestId; iframe.style.display='none';
-    const form = document.createElement('form');
-    form.method='POST'; form.action=SYNC_URL; form.target=iframe.name; form.style.display='none';
-    const field = document.createElement('input'); field.type='hidden'; field.name='payload';
-    field.value=JSON.stringify({requestId,record});
-    form.appendChild(field); document.body.append(iframe,form);
-    let finished=false;
-    const cleanup = () => {window.removeEventListener('message',onMessage);form.remove();iframe.remove();};
-    const timer=setTimeout(()=>{if(!finished){finished=true;cleanup();reject(new Error('Timeout'));}},90000);
-    const onMessage = (event) => {
-      const d=event.data;
-      if(!d || d.type!=='AN_TRANSPORTES_SYNC' || d.requestId!==requestId) return;
-      if(finished)return; finished=true;clearTimeout(timer);cleanup();
-      if(d.ok) resolve(true); else reject(new Error(d.error || 'Falha no servidor'));
+let dbPromise;
+
+function openDB() {
+  if (!('indexedDB' in window)) return Promise.reject(new Error('Este navegador não oferece suporte ao armazenamento local necessário.'));
+  if (!dbPromise) dbPromise = new Promise((resolve, reject) => {
+    const request = indexedDB.open(DB_NAME, DB_VERSION);
+    request.onupgradeneeded = () => {
+      const db = request.result;
+      if (!db.objectStoreNames.contains(STORE_NAME)) db.createObjectStore(STORE_NAME, { keyPath: 'id' });
     };
-    window.addEventListener('message',onMessage);
-    document.body.appendChild(iframe);
-    document.body.appendChild(form);
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error || new Error('Não foi possível abrir o banco local.'));
+  });
+  return dbPromise;
+}
+
+async function dbGetAll() {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE_NAME, 'readonly');
+    const req = tx.objectStore(STORE_NAME).getAll();
+    req.onsuccess = () => resolve(req.result || []);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+async function dbPut(record) {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE_NAME, 'readwrite');
+    tx.objectStore(STORE_NAME).put(record);
+    tx.oncomplete = () => resolve(true);
+    tx.onerror = () => reject(tx.error || new Error('Falha ao gravar o relatório.'));
+    tx.onabort = () => reject(tx.error || new Error('Gravação cancelada.'));
+  });
+}
+
+function nowLocal() {
+  const d = new Date();
+  d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+  return d.toISOString().slice(0, 16);
+}
+$('reportDate').value = nowLocal();
+
+function updateConnection() {
+  const online = navigator.onLine;
+  $('connection').className = 'status ' + (online ? 'good' : 'warn');
+  $('connection').textContent = online
+    ? 'Conectado à internet. Os registros ficam salvos neste aparelho.'
+    : 'Sem internet: você pode continuar preenchendo; os registros ficam salvos neste aparelho.';
+}
+window.addEventListener('online', updateConnection);
+window.addEventListener('offline', updateConnection);
+updateConnection();
+
+function makeId() {
+  return (crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + Math.random().toString(16).slice(2));
+}
+
+async function imageFileToBlob(file) {
+  if (!file.type.startsWith('image/')) throw new Error('Selecione somente arquivos de imagem.');
+  let bitmap;
+  let source;
+  let width;
+  let height;
+  if ('createImageBitmap' in window) {
+    bitmap = await createImageBitmap(file);
+    source = bitmap;
+    width = bitmap.width;
+    height = bitmap.height;
+  } else {
+    source = await new Promise((resolve, reject) => {
+      const img = new Image();
+      const url = URL.createObjectURL(file);
+      img.onload = () => { URL.revokeObjectURL(url); resolve(img); };
+      img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('Não foi possível abrir uma das fotos.')); };
+      img.src = url;
+    });
+    width = source.naturalWidth;
+    height = source.naturalHeight;
+  }
+  const scale = Math.min(1, MAX_IMAGE_SIDE / Math.max(width, height));
+  const canvas = document.createElement('canvas');
+  canvas.width = Math.max(1, Math.round(width * scale));
+  canvas.height = Math.max(1, Math.round(height * scale));
+  const ctx = canvas.getContext('2d', { alpha: false });
+  if (!ctx) throw new Error('Não foi possível processar a foto.');
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.drawImage(source, 0, 0, canvas.width, canvas.height);
+  if (bitmap) bitmap.close();
+  const blob = await new Promise((resolve, reject) => canvas.toBlob(
+    result => result ? resolve(result) : reject(new Error('Não foi possível compactar uma das fotos.')),
+    'image/jpeg', IMAGE_QUALITY
+  ));
+  return { name: (file.name.replace(/\.[^.]+$/, '') || 'foto') + '.jpg', type: 'image/jpeg', blob };
+}
+
+function renderPhotoPreview() {
+  const preview = $('preview');
+  preview.innerHTML = '';
+  selectedPhotos.forEach((photo, index) => {
+    const item = document.createElement('div');
+    item.style.cssText = 'display:flex;flex-direction:column;gap:5px;width:92px;';
+    const img = document.createElement('img');
+    img.alt = photo.name;
+    img.src = URL.createObjectURL(photo.blob);
+    img.onload = () => URL.revokeObjectURL(img.src);
+    img.style.cssText = 'width:88px;height:88px;object-fit:cover;border-radius:8px;border:1px solid var(--line);';
+    const remove = document.createElement('button');
+    remove.type = 'button';
+    remove.className = 'danger';
+    remove.textContent = 'Remover';
+    remove.style.cssText = 'min-height:34px;padding:6px;font-size:12px;';
+    remove.setAttribute('aria-label', 'Remover foto ' + photo.name);
+    remove.addEventListener('click', () => {
+      selectedPhotos.splice(index, 1);
+      renderPhotoPreview();
+    });
+    item.append(img, remove);
+    preview.appendChild(item);
+  });
+  $('photoCount').textContent = selectedPhotos.length + '/' + MAX_PHOTOS + ' foto(s) selecionada(s)';
+}
+
+$('photos').addEventListener('change', async () => {
+  const files = [...$('photos').files];
+  $('photos').value = '';
+  const available = MAX_PHOTOS - selectedPhotos.length;
+  if (available <= 0) {
+    alert('O limite é de ' + MAX_PHOTOS + ' fotos por relatório. Remova uma foto para adicionar outra.');
+    return;
+  }
+  const accepted = files.slice(0, available);
+  if (files.length > available) alert('Foram selecionadas somente mais ' + available + ' foto(s), para respeitar o limite de ' + MAX_PHOTOS + '.');
+  const label = $('photoCount');
+  label.textContent = 'Preparando fotos…';
+  try {
+    for (const file of accepted) selectedPhotos.push(await imageFileToBlob(file));
+    renderPhotoPreview();
+  } catch (err) {
+    renderPhotoPreview();
+    alert(err.message || 'Não foi possível processar as fotos. Tente imagens menores.');
+  }
+});
+
+function blobToDataURL(blob) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = () => reject(reader.error || new Error('Falha ao preparar foto para envio.'));
+    reader.readAsDataURL(blob);
+  });
+}
+
+$('reportForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  const btn = e.submitter || $('reportForm').querySelector('button[type="submit"]');
+  btn.disabled = true;
+  btn.textContent = 'Salvando…';
+  try {
+    const category = document.querySelector('input[name="category"]:checked')?.value;
+    const record = {
+      id: makeId(),
+      driver: $('driver').value,
+      vehicle: $('vehicle').value,
+      odometer: Number($('odometer').value),
+      date: $('reportDate').value,
+      category,
+      description: $('description').value.trim(),
+      photos: selectedPhotos.map(p => ({ name: p.name, type: p.type, blob: p.blob })),
+      createdAt: new Date().toISOString(),
+      status: 'Pendente de envio'
+    };
+    await dbPut(record);
+    reports.unshift(record);
+    renderSaved();
+    $('reportForm').reset();
+    $('reportDate').value = nowLocal();
+    selectedPhotos = [];
+    renderPhotoPreview();
+    alert('Relatório salvo neste dispositivo. O envio será tentado quando houver internet.');
+    if (navigator.onLine) setTimeout(syncPending, 500);
+  } catch (err) {
+    alert('Não foi possível salvar no armazenamento deste aparelho. Verifique o espaço disponível no navegador e tente novamente. Detalhe: ' + (err.message || 'erro desconhecido'));
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Salvar relatório neste dispositivo';
+  }
+});
+
+function renderSaved() {
+  const list = $('savedList');
+  $('pendingCount').textContent = '(' + reports.length + ')';
+  if (!reports.length) {
+    list.innerHTML = '<p class="small">Nenhum registro salvo ainda.</p>';
+    return;
+  }
+  list.innerHTML = '';
+  reports.forEach(r => {
+    const el = document.createElement('div');
+    el.className = 'saved-item';
+    const title = document.createElement('strong');
+    title.textContent = (r.category || 'Registro') + ' · ' + (r.vehicle || '');
+    const info = document.createElement('div');
+    info.className = 'small';
+    info.textContent = (r.driver || '') + ' · Odômetro ' + (r.odometer || 0) + ' km · ' + String(r.date || '').replace('T', ' ') + ' · ' + ((r.photos || []).length) + ' foto(s)';
+    const desc = document.createElement('p');
+    desc.textContent = r.description || '';
+    desc.style.margin = '8px 0';
+    const status = document.createElement('div');
+    status.className = 'small';
+    status.textContent = r.status || 'Pendente de envio';
+    el.append(title, info, desc, status);
+    list.appendChild(el);
+  });
+}
+
+async function exportBackup() {
+  const exportReports = [];
+  for (const r of reports) {
+    const photos = [];
+    for (const p of (r.photos || [])) {
+      const blob = p.blob || p.data;
+      photos.push({ name: p.name, type: p.type || 'image/jpeg', data: typeof blob === 'string' ? blob : await blobToDataURL(blob) });
+    }
+    exportReports.push({ ...r, photos });
+  }
+  const payload = { exportedAt: new Date().toISOString(), company: 'A&N TRANSPORTES', reports: exportReports };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'an-transportes-backup-' + new Date().toISOString().slice(0, 10) + '.json';
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+$('exportBtn').addEventListener('click', () => exportBackup().catch(err => alert('Não foi possível gerar o backup: ' + err.message)));
+
+async function syncPending() {
+  if (syncInProgress) return;
+  if (!navigator.onLine) return;
+  if (!SYNC_URL.startsWith('https://script.google.com/macros/s/')) {
+    alert('A integração com o serviço da empresa não está configurada.');
+    return;
+  }
+  const pending = reports.filter(r => r.status !== 'Enviado');
+  if (!pending.length) return;
+  syncInProgress = true;
+  const btn = $('syncBtn');
+  btn.disabled = true;
+  btn.textContent = 'Enviando…';
+  try {
+    for (const record of pending) {
+      const wireRecord = {
+        ...record,
+        photos: await Promise.all((record.photos || []).map(async p => ({
+          name: p.name,
+          type: p.type || 'image/jpeg',
+          data: p.data || await blobToDataURL(p.blob)
+        })))
+      };
+      await submitToAppsScript(wireRecord);
+      const original = reports.find(r => r.id === record.id);
+      if (original) {
+        original.status = 'Enviado';
+        original.sentAt = new Date().toISOString();
+        await dbPut(original);
+        renderSaved();
+      }
+    }
+  } catch (err) {
+    const failed = pending.find(r => r.status !== 'Enviado');
+    if (failed) {
+      failed.status = 'Pendente de envio — falha; tentará novamente';
+      try { await dbPut(failed); } catch (_) {}
+      renderSaved();
+    }
+    alert('Não foi possível confirmar o envio. O registro continua salvo neste aparelho e será tentado novamente quando houver conexão.');
+  } finally {
+    syncInProgress = false;
+    btn.disabled = false;
+    btn.textContent = 'Enviar pendentes agora';
+  }
+}
+
+function submitToAppsScript(record) {
+  return new Promise((resolve, reject) => {
+    const requestId = makeId();
+    const iframe = document.createElement('iframe');
+    iframe.name = 'an-sync-' + requestId;
+    iframe.style.display = 'none';
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = SYNC_URL;
+    form.target = iframe.name;
+    form.style.display = 'none';
+    const field = document.createElement('input');
+    field.type = 'hidden';
+    field.name = 'payload';
+    field.value = JSON.stringify({ requestId, record });
+    form.appendChild(field);
+    let finished = false;
+    const cleanup = () => {
+      window.removeEventListener('message', onMessage);
+      form.remove();
+      iframe.remove();
+    };
+    const timer = setTimeout(() => {
+      if (!finished) {
+        finished = true;
+        cleanup();
+        reject(new Error('Tempo esgotado aguardando confirmação.'));
+      }
+    }, 90000);
+    const onMessage = event => {
+      const d = event.data;
+      if (!d || d.type !== 'AN_TRANSPORTES_SYNC' || d.requestId !== requestId) return;
+      if (finished) return;
+      finished = true;
+      clearTimeout(timer);
+      cleanup();
+      if (d.ok) resolve(true);
+      else reject(new Error(d.message || 'Falha no servidor.'));
+    };
+    window.addEventListener('message', onMessage);
+    document.body.append(iframe, form);
     form.submit();
   });
 }
-$('syncBtn').addEventListener('click',syncPending);
-window.addEventListener('online',()=>{updateConnection();setTimeout(syncPending,1500);});
 
+$('syncBtn').addEventListener('click', syncPending);
+window.addEventListener('online', () => { updateConnection(); setTimeout(syncPending, 1500); });
+
+async function load() {
+  try {
+    reports = await dbGetAll();
+    reports.sort((a, b) => String(b.createdAt || '').localeCompare(String(a.createdAt || '')));
+    renderSaved();
+    // Remove somente a cópia antiga de testes do localStorage; os relatórios atuais ficam no IndexedDB.
+    try { localStorage.removeItem('an_transportes_reports_v1'); } catch (_) {}
+    if (navigator.onLine) setTimeout(syncPending, 1200);
+  } catch (err) {
+    $('connection').className = 'status warn';
+    $('connection').textContent = 'Não foi possível iniciar o armazenamento local. Atualize o navegador ou use outro navegador atualizado.';
+    alert('O armazenamento local não pôde ser iniciado. Seus dados ainda não foram salvos.');
+  }
+}
+
+$('photoCount').textContent = '0/' + MAX_PHOTOS + ' foto(s) selecionada(s)';
 load();
-if(navigator.onLine && SYNC_URL.startsWith('https://script.google.com/macros/s/')) setTimeout(syncPending,1200);
-if('serviceWorker' in navigator && location.protocol.startsWith('http')) navigator.serviceWorker.register('./sw.js').catch(()=>{});
+if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
+  navigator.serviceWorker.register('./sw.js').catch(err => console.warn('Service Worker não foi instalado:', err));
+}
+
 </script>
 </body>
 </html>
