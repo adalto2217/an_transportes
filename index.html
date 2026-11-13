@@ -51,9 +51,17 @@ button{font:inherit;font-weight:750;border:0;border-radius:11px;padding:13px 16p
 </section>
 <section class="panel">
 <h2><span class="step">3</span> Foto e descrição</h2>
-<div class="photo"><label for="photos">Adicionar foto(s) ou comprovante(s)</label><input id="photos" type="file" accept="image/*" multiple><div class="hint">As fotos são compactadas e ficam salvas neste aparelho junto com o relatório. Você pode remover cada foto antes de salvar.</div><div id="photoCount" class="hint">0/5 foto(s) selecionada(s)</div><div id="preview" class="preview"></div></div>
-<div style="margin-top:14px"><label for="description">Descrição / observações *</label><textarea id="description" required placeholder="Descreva a manutenção, abastecimento, nota de viagem ou ocorrência. Inclua valores, local, fornecedor ou número da nota quando necessário."></textarea></div>
-</section>
+<div class="photo">
+  <label for="photos">Adicionar fotos, comprovantes ou PDFs</label>
+  <input id="photos" type="file" accept="image/*,application/pdf" multiple>
+  <div class="hint">Você pode adicionar até 5 fotos e 5 PDFs. As fotos serão compactadas e os PDFs serão mantidos no formato original. Os arquivos ficam salvos neste aparelho junto com o relatório.</div>
+  <div id="photoCount" class="hint">0/10 anexo(s) selecionado(s)</div>
+  <div id="preview" class="preview"></div>
+</div>
+<div style="margin-top:14px">
+  <label for="description">Descrição / observações *</label>
+  <textarea id="description" required placeholder="Descreva a manutenção, abastecimento, nota de viagem ou ocorrência. Inclua valores, local, fornecedor ou número da nota quando necessário."></textarea>
+</div>
 <div class="panel">
 <button class="primary" type="submit">Salvar relatório neste dispositivo</button>
 <p class="hint">Os registros ficam salvos neste aparelho. Depois de configurar o serviço da empresa, os registros pendentes serão enviados individualmente quando houver internet.</p>
@@ -75,6 +83,8 @@ const DB_NAME = 'an_transportes_db';
 const DB_VERSION = 1;
 const STORE_NAME = 'reports';
 const MAX_PHOTOS = 5;
+const MAX_PDFS = 5;
+const MAX_PDF_SIZE = 10 * 1024 * 1024;  
 const MAX_IMAGE_SIDE = 1440;
 const IMAGE_QUALITY = 0.72;
 const $ = id => document.getElementById(id);
@@ -183,50 +193,123 @@ async function imageFileToBlob(file) {
 function renderPhotoPreview() {
   const preview = $('preview');
   preview.innerHTML = '';
+
+  let photoCount = 0;
+  let pdfCount = 0;
+
   selectedPhotos.forEach((photo, index) => {
     const item = document.createElement('div');
     item.style.cssText = 'display:flex;flex-direction:column;gap:5px;width:92px;';
-    const img = document.createElement('img');
-    img.alt = photo.name;
-    img.src = URL.createObjectURL(photo.blob);
-    img.onload = () => URL.revokeObjectURL(img.src);
-    img.style.cssText = 'width:88px;height:88px;object-fit:cover;border-radius:8px;border:1px solid var(--line);';
+
+    if (photo.type === 'application/pdf') {
+      pdfCount++;
+
+      const pdf = document.createElement('div');
+      pdf.textContent = '📄 PDF';
+      pdf.title = photo.name;
+      pdf.style.cssText = 'width:88px;height:88px;display:flex;align-items:center;justify-content:center;flex-direction:column;background:#f2f2f2;color:#333;border-radius:8px;border:1px solid var(--line);font-weight:bold;font-size:15px;overflow:hidden;text-align:center;';
+
+      const name = document.createElement('div');
+      name.textContent = photo.name;
+      name.title = photo.name;
+      name.style.cssText = 'font-size:10px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;width:88px;';
+
+      item.append(pdf, name);
+    } else {
+      photoCount++;
+
+      const img = document.createElement('img');
+      img.alt = photo.name;
+      img.src = URL.createObjectURL(photo.blob);
+      img.onload = () => URL.revokeObjectURL(img.src);
+      img.style.cssText = 'width:88px;height:88px;object-fit:cover;border-radius:8px;border:1px solid var(--line);';
+
+      item.append(img);
+    }
+
     const remove = document.createElement('button');
     remove.type = 'button';
     remove.className = 'danger';
     remove.textContent = 'Remover';
     remove.style.cssText = 'min-height:34px;padding:6px;font-size:12px;';
-    remove.setAttribute('aria-label', 'Remover foto ' + photo.name);
+    remove.setAttribute('aria-label', 'Remover anexo ' + photo.name);
+
     remove.addEventListener('click', () => {
       selectedPhotos.splice(index, 1);
       renderPhotoPreview();
     });
-    item.append(img, remove);
+
+    item.appendChild(remove);
     preview.appendChild(item);
   });
-  $('photoCount').textContent = selectedPhotos.length + '/' + MAX_PHOTOS + ' foto(s) selecionada(s)';
+
+  $('photoCount').textContent =
+    photoCount + '/' + MAX_PHOTOS + ' foto(s) e ' +
+    pdfCount + '/' + MAX_PDFS + ' PDF(s) selecionado(s)';
 }
+
 
 $('photos').addEventListener('change', async () => {
   const files = [...$('photos').files];
   $('photos').value = '';
-  const available = MAX_PHOTOS - selectedPhotos.length;
-  if (available <= 0) {
-    alert('O limite é de ' + MAX_PHOTOS + ' fotos por relatório. Remova uma foto para adicionar outra.');
-    return;
+
+  let photoCount = selectedPhotos.filter(
+    p => p.type !== 'application/pdf'
+  ).length;
+
+  let pdfCount = selectedPhotos.filter(
+    p => p.type === 'application/pdf'
+  ).length;
+
+  const errors = [];
+
+  for (const file of files) {
+    const isPdf =
+      file.type === 'application/pdf' ||
+      file.name.toLowerCase().endsWith('.pdf');
+
+    if (isPdf) {
+      if (pdfCount >= MAX_PDFS) {
+        errors.push('Limite de 5 PDFs atingido.');
+        continue;
+      }
+
+      if (file.size > MAX_PDF_SIZE) {
+        errors.push(file.name + ': PDF maior que 10 MB.');
+        continue;
+      }
+
+      selectedPhotos.push({
+        name: file.name,
+        type: 'application/pdf',
+        blob: file
+      });
+
+      pdfCount++;
+    } else if (file.type.startsWith('image/')) {
+      if (photoCount >= MAX_PHOTOS) {
+        errors.push('Limite de 5 fotos atingido.');
+        continue;
+      }
+
+      try {
+        selectedPhotos.push(await imageFileToBlob(file));
+        photoCount++;
+      } catch (err) {
+        errors.push(file.name + ': falha ao processar a foto.');
+      }
+    } else {
+      errors.push(file.name + ': formato não permitido.');
+    }
   }
-  const accepted = files.slice(0, available);
-  if (files.length > available) alert('Foram selecionadas somente mais ' + available + ' foto(s), para respeitar o limite de ' + MAX_PHOTOS + '.');
-  const label = $('photoCount');
-  label.textContent = 'Preparando fotos…';
-  try {
-    for (const file of accepted) selectedPhotos.push(await imageFileToBlob(file));
-    renderPhotoPreview();
-  } catch (err) {
-    renderPhotoPreview();
-    alert(err.message || 'Não foi possível processar as fotos. Tente imagens menores.');
+
+  renderPhotoPreview();
+
+  if (errors.length) {
+    alert(errors.join('\n'));
   }
 });
+
 
 function blobToDataURL(blob) {
   return new Promise((resolve, reject) => {
@@ -288,7 +371,7 @@ function renderSaved() {
     title.textContent = (r.category || 'Registro') + ' · ' + (r.vehicle || '');
     const info = document.createElement('div');
     info.className = 'small';
-    info.textContent = (r.driver || '') + ' · Odômetro ' + (r.odometer || 0) + ' km · ' + String(r.date || '').replace('T', ' ') + ' · ' + ((r.photos || []).length) + ' foto(s)';
+    info.textContent = (r.driver || '') + ' · Odômetro ' + (r.odometer || 0) + ' km · ' + String(r.date || '').replace('T', ' ') + ' · ' + ((r.photos || []).length) +  ' anexo(s)';
     const desc = document.createElement('p');
     desc.textContent = r.description || '';
     desc.style.margin = '8px 0';
@@ -431,7 +514,9 @@ async function load() {
   }
 }
 
-$('photoCount').textContent = '0/' + MAX_PHOTOS + ' foto(s) selecionada(s)';
+$('photoCount').textContent =
+  '0/' + MAX_PHOTOS + ' foto(s) e 0/' +
+  MAX_PDFS + ' PDF(s) selecionado(s)';
 load();
 if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
   navigator.serviceWorker.register('./sw.js').catch(err => console.warn('Service Worker não foi instalado:', err));
